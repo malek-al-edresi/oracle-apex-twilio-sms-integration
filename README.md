@@ -1,3 +1,5 @@
+| ![message](screenshot/message.jpg) | ![procedure](screenshot/procedure.png) |
+
 # Oracle APEX + Twilio SMS Integration
 
 This project demonstrates how to integrate **Twilio SMS API** with **Oracle APEX / Oracle Database (PL/SQL)** to send SMS messages programmatically.
@@ -23,6 +25,7 @@ oracle-apex-twilio-sms-integration/
 ├── script.sql                    # Twilio SMS procedure + test example
 └── screenshot/
     └── procedure.png             # Screenshot of PL/SQL procedure
+    └── message.jpg               # Screenshot of message output
 ```
 
 ---
@@ -102,28 +105,27 @@ send_sms_twilio(:P0_PHONE, :P0_MESSAGE);
 
 ---
 
-## Screenshot
+## Screenshots
 
-| Run Preview                      |
-| -------------------------------------- |
-| ![procedure](screenshot/procedure.png) |
-| ![message](screenshot/message.jpg) |
+| Run Preview | Procedure Code |
+|-------------|----------------|
+| ![message](screenshot/message.jpg) | ![procedure](screenshot/procedure.png) |
 
 ---
 
 ## About Me
 
-**Malek Mohammed Al-Edresi** (مالك محمد الادريسي)  
+**Malek Mohammed**  
 *Oracle APEX Engineer, PL/SQL Specialist, Database & Cloud Developer*
 
 ### Professional Profile
 - **Current Role**: Oracle APEX Engineer & PL/SQL Specialist
 - **Specializations**: Database Architecture, RESTful APIs, Cloud Development (OCI)
-- **Professional Title**: ENG. Malek Mohammed A
+- **Professional Title**: ENG. Malek Mohammed
 - **Industry**: Healthcare IT Solutions & Enterprise Systems
 
 ### Healthcare & Medical Systems
-- **Primary Role**: Radiology Technician (فني أشعة) at عيادة العظام (Orthopedic Clinic)
+- **Primary Role**: Radiology Technician (فني أشعة) at Orthopedic Clinic
 - **Healthcare Systems**: Built comprehensive Medical Center System with 150+ APEX pages, 120+ database tables
 - **Special Projects**: Developing health website for Multiple Sclerosis patients (IST224 Fall 2025 final project)
 - **Personal Mission**: Improving lives of MS patients through technology, inspired by mother's MS diagnosis
