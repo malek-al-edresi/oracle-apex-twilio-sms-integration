@@ -4,8 +4,7 @@ This project demonstrates how to integrate **Twilio SMS API** with **Oracle APEX
 It includes example SQL scripts, a stored procedure for sending SMS, configuration steps, and sample usage.
 
 ---
-
-## Screenshots
+![procedure](screenshot/temp.jpg) 
 
 | Procedure Code | Run Preview |
 |----------------|-------------|
