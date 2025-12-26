@@ -1,0 +1,278 @@
+# Oracle APEX - Twilio SMS Integration
+
+## 📋 Overview
+
+This project demonstrates how to integrate Oracle APEX with Twilio's SMS API to enable SMS messaging capabilities within your healthcare management system. The solution provides a secure, configurable, and reusable SMS sending mechanism that can be easily integrated into various APEX applications.
+
+## ✨ Features
+
+- **Secure Configuration Management**: Store Twilio API credentials securely in a dedicated configuration table
+- **Parameterized SMS Sending**: Send SMS messages to any phone number with custom content
+- **Error Handling**: Comprehensive error logging and debugging capabilities
+- **International Support**: Automatic country code formatting for international numbers
+- **Flexible Authentication**: Support for different authentication types (Basic Auth)
+- **Debug Logging**: Built-in debugging with APEX debug messages
+
+## 🏗️ Architecture
+
+### Database Components
+
+#### Configuration Table
+```sql
+MANAG_SYS_SEC_L_SETTING_API_SERVICES
+```
+Stores API configuration for various services including Twilio SMS.
+
+#### Key Columns:
+- `SERVICE_NAME`: Identifier for the service (e.g., 'TWILIO_SMS_SERVICE')
+- `ACCOUNT_SID`: Twilio Account SID
+- `API_KEY`: Twilio Auth Token (stored as API_KEY)
+- `API_HOST`: Twilio API host URL
+- `SERVICE_VERSION`: Twilio API version
+- `AUTH_TYPE`: Authentication type (default: 'BASIC')
+- `DEFAULT_SENDER_PHONE`: Default sender phone number
+- `CODE_COUNTRY_CALL`: Country code for phone numbers
+
+### Core Procedure: `send_sms`
+
+#### Parameters:
+- `p_to_phone_no` (VARCHAR2): Recipient's phone number (without country code)
+- `p_msg` (CLOB): SMS message content
+
+#### Key Functionality:
+1. Retrieves Twilio configuration from the settings table
+2. Constructs proper API request URL
+3. Sets up authentication headers
+4. Sends HTTP POST request to Twilio API
+5. Handles errors and logs appropriate messages
+
+## 🚀 Installation
+
+### 1. Prerequisites
+
+- Oracle Database 11g or higher
+- Oracle APEX 5.0 or higher
+- Twilio account with SMS capabilities
+- Network access to Twilio API endpoints (api.twilio.com)
+
+### 2. Database Setup
+
+#### Step 1: Create Configuration Table
+```sql
+CREATE TABLE "MEDICAL_CENTER_SYSTEM"."MANAG_SYS_SEC_L_SETTING_API_SERVICES" (
+    "ID" NUMBER GENERATED ALWAYS AS IDENTITY,
+    "SERVICE_NAME" VARCHAR2(100 BYTE),
+    "SERVICE_VERSION" VARCHAR2(100 BYTE),
+    "ACCOUNT_SID" VARCHAR2(255 BYTE),
+    "PASSWORD" VARCHAR2(255 BYTE),
+    "API_KEY" VARCHAR2(255 BYTE),
+    "API_SECRET" VARCHAR2(255 BYTE),
+    "API_URL" VARCHAR2(255 BYTE),
+    "API_HOST" VARCHAR2(255 BYTE),
+    "AUTH_TYPE" VARCHAR2(50 BYTE) DEFAULT 'BASIC',
+    "DEFAULT_SENDER_PHONE" VARCHAR2(20 BYTE),
+    "CODE_COUNTRY_CALL" VARCHAR2(20 BYTE) -- Add this column for country codes
+);
+```
+
+#### Step 2: Insert Twilio Configuration
+```sql
+INSERT INTO MANAG_SYS_SEC_L_SETTING_API_SERVICES (
+    SERVICE_NAME,
+    SERVICE_VERSION,
+    ACCOUNT_SID,
+    API_KEY,
+    API_HOST,
+    API_URL,
+    AUTH_TYPE,
+    DEFAULT_SENDER_PHONE,
+    CODE_COUNTRY_CALL
+) VALUES (
+    'TWILIO_SMS_SERVICE',
+    '2010-04-01', -- Twilio API version
+    'your_account_sid_here',
+    'your_auth_token_here',
+    'https://api.twilio.com',
+    '/Messages.json',
+    'BASIC',
+    '+1234567890', -- Your Twilio phone number
+    '+1' -- Country code
+);
+COMMIT;
+```
+
+#### Step 3: Create Supporting Objects
+
+Ensure you have the following supporting packages:
+- `GET_API_CONFIG` function to retrieve service configurations
+- `ERROR_LOG_PKG_SYSTEM_ALL` package for error logging
+- `file_processing_error_type` type definition
+
+### 3. Procedure Deployment
+
+Execute the `send_sms` procedure creation script provided in the repository.
+
+## 📖 Usage
+
+### Basic SMS Sending
+
+```sql
+BEGIN
+    send_sms(
+        p_to_phone_no => '778888730', -- Recipient number without country code
+        p_msg         => 'Hello from Oracle APEX!' -- Message content
+    );
+END;
+/
+```
+
+### Integration with APEX Applications
+
+#### Example 1: Send SMS from PL/SQL Process
+```sql
+DECLARE
+    l_message CLOB;
+BEGIN
+    l_message := 'Your appointment is confirmed for ' || 
+                 TO_CHAR(SYSDATE + 2, 'DD-MON-YYYY') || 
+                 ' at 10:00 AM.';
+    
+    send_sms(
+        p_to_phone_no => :P10_PATIENT_PHONE,
+        p_msg         => l_message
+    );
+END;
+```
+
+#### Example 2: Dynamic Page Process
+Create an APEX page process with PL/SQL code to send SMS based on user actions.
+
+## 🔧 Configuration
+
+### Twilio Account Setup
+
+1. Sign up for a [Twilio account](https://www.twilio.com/try-twilio)
+2. Get your Account SID and Auth Token from the Twilio Console
+3. Purchase a Twilio phone number capable of sending SMS
+
+### Environment Variables
+
+Consider using APEX application items or workspace preferences for different environments (Development, Test, Production).
+
+## 🛡️ Security Considerations
+
+### Credential Storage
+- API credentials are stored in a dedicated, access-controlled table
+- Consider using Oracle Wallet or APEX Secrets for enhanced security
+- Implement column-level encryption for sensitive data
+
+### Network Security
+- Ensure outbound HTTPS access to `api.twilio.com`
+- Implement firewall rules to restrict API access
+- Use VPN or private endpoints if required by your organization
+
+### Access Control
+- Restrict execute privileges on `send_sms` procedure
+- Implement audit logging for SMS sending activities
+- Add rate limiting to prevent abuse
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### 1. Authentication Errors
+- Verify Account SID and Auth Token are correct
+- Check that the Auth Token doesn't contain extra spaces
+- Ensure AUTH_TYPE is set correctly ('BASIC')
+
+#### 2. Network Issues
+- Verify database can reach `api.twilio.com`
+- Check firewall rules and proxy settings
+- Test with `apex_web_service.make_rest_request` for other endpoints
+
+#### 3. Phone Number Format Issues
+- Ensure country code is correctly configured
+- Phone numbers should be in E.164 format
+- Verify the sender phone number is SMS-capable in Twilio
+
+### Debugging
+
+Enable APEX debug to see detailed logs:
+```sql
+-- In APEX session or PL/SQL
+apex_debug.enable(level => 7);
+```
+
+Check the `ERROR_LOG_PKG_SYSTEM_ALL` table for error details.
+
+## 📊 Monitoring
+
+### Success Indicators
+- SMS messages appear in Twilio Console → Messages → Logs
+- No errors in `ERROR_LOG_PKG_SYSTEM_ALL` table
+- APEX debug logs show successful API calls
+
+### Performance Considerations
+- Average API response time: 1-3 seconds
+- Implement queuing for bulk SMS operations
+- Consider asynchronous processing for large volumes
+
+## 🔄 Extending the Solution
+
+### Support for Other SMS Providers
+Modify the `send_sms` procedure to support multiple providers by:
+1. Adding a provider parameter
+2. Creating provider-specific configuration sections
+3. Implementing provider-specific API calls
+
+### Adding Delivery Reports
+1. Implement Twilio webhooks for delivery status
+2. Create a REST endpoint in APEX to receive status updates
+3. Update SMS status in your database
+
+### Template Support
+Add message templating:
+```sql
+CREATE OR REPLACE FUNCTION format_sms_template(
+    p_template VARCHAR2,
+    p_params JSON
+) RETURN CLOB;
+```
+
+## 📝 Best Practices
+
+1. **Validation**: Always validate phone numbers before sending
+2. **Content Limits**: SMS messages have 160-character limits (concatenate for longer messages)
+3. **Consent**: Ensure you have recipient consent for SMS communications
+4. **Testing**: Test with personal numbers before production deployment
+5. **Monitoring**: Regularly review Twilio usage and costs
+6. **Error Handling**: Implement retry logic for transient failures
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📞 Support
+
+For issues and questions:
+1. Check the [Twilio Documentation](https://www.twilio.com/docs/sms)
+2. Review Oracle APEX REST services documentation
+3. Create an issue in the GitHub repository
+
+## 🙏 Acknowledgments
+
+- [Twilio](https://www.twilio.com) for their excellent SMS API
+- Oracle APEX team for the robust REST service capabilities
+- Contributors and maintainers of this integration
+
+---
+
+**Note**: Always comply with local regulations and obtain proper consent before sending SMS messages to users. This implementation is designed for healthcare notifications but can be adapted for other legitimate use cases.
