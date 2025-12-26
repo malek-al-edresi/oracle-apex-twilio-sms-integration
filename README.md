@@ -104,9 +104,10 @@ send_sms_twilio(:P0_PHONE, :P0_MESSAGE);
 
 ## Screenshot
 
-| Procedure Preview                      |
+| Run Preview                      |
 | -------------------------------------- |
 | ![procedure](screenshot/procedure.png) |
+| ![message](screenshot/message.jpg) |
 
 ---
 
