@@ -5,6 +5,14 @@ It includes example SQL scripts, a stored procedure for sending SMS, configurati
 
 ---
 
+## Screenshots
+
+| Procedure Code | Run Preview |
+|----------------|-------------|
+| ![procedure](screenshot/procedure.png) | ![message](screenshot/message.jpg) |
+
+---
+
 ## Features
 
 * Send SMS directly from Oracle Database using Twilio API
@@ -100,14 +108,6 @@ send_sms_twilio(:P0_PHONE, :P0_MESSAGE);
 * Do not publish **AUTH_TOKEN** publicly
 * Use **APEX Credential Store / Vault** for production
 * Ensure network access to `api.twilio.com`
-
----
-
-## Screenshots
-
-| Procedure Code | Run Preview |
-|----------------|-------------|
-| ![procedure](screenshot/procedure.png) | ![message](screenshot/message.jpg) |
 
 ---
 
