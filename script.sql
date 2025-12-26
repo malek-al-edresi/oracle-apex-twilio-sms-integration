@@ -2,9 +2,9 @@
 CREATE OR REPLACE PROCEDURE send_sms_twilio (
     p_to_phone_no     IN VARCHAR2,
     p_message         IN VARCHAR2,
-    p_account_sid     IN VARCHAR2 DEFAULT NULL,  -- Twilio Account SID
-    p_auth_token      IN VARCHAR2 DEFAULT NULL,  -- Twilio Auth Token
-    p_from_phone      IN VARCHAR2 DEFAULT NULL   -- Your Twilio phone number
+    p_account_sid     IN VARCHAR2,  -- Twilio Account SID
+    p_auth_token      IN VARCHAR2,  -- Twilio Auth Token
+    p_from_phone      IN VARCHAR2   -- Your Twilio phone number
 )
 IS
 ----------------------------------------------------------------------
