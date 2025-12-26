@@ -1,5 +1,3 @@
-| ![message](screenshot/message.jpg) | ![procedure](screenshot/procedure.png) |
-
 # Oracle APEX + Twilio SMS Integration
 
 This project demonstrates how to integrate **Twilio SMS API** with **Oracle APEX / Oracle Database (PL/SQL)** to send SMS messages programmatically.
