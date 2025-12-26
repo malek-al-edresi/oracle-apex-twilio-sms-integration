@@ -1,194 +1,114 @@
--- script for create proceudre sned sms by twilio api
-create or replace procedure send_sms (
-    p_to_phone_no     in varchar2,
-    p_msg             in clob
+-- Script to create a simple SMS sending procedure using Twilio API
+CREATE OR REPLACE PROCEDURE send_sms_twilio (
+    p_to_phone_no     IN VARCHAR2,
+    p_message         IN VARCHAR2,
+    p_account_sid     IN VARCHAR2 DEFAULT NULL,  -- Twilio Account SID
+    p_auth_token      IN VARCHAR2 DEFAULT NULL,  -- Twilio Auth Token
+    p_from_phone      IN VARCHAR2 DEFAULT NULL   -- Your Twilio phone number
 )
-is
----------------------------------------------------------------------- 
--- PROCEDURE NAME    : send_sms
--- PURPOSE           : Send an SMS message using the UltraMsg API.
+IS
+----------------------------------------------------------------------
+-- PROCEDURE NAME    : send_sms_twilio
+-- PURPOSE           : Send an SMS message using the Twilio API.
 -- PARAMETERS        :  
 --                     p_to_phone_no: The phone number to which the SMS will be sent.
---                     p_msg: The message content to be sent as an SMS.
+--                     p_message: The message content to be sent as an SMS.
+--                     p_account_sid: Your Twilio Account SID
+--                     p_auth_token: Your Twilio Auth Token
+--                     p_from_phone: Your Twilio phone number (with country code)
 -- DESCRIPTION       :  
---                     This procedure constructs and sends an SMS message using the UltraMsg API.
---                     It retrieves necessary API configuration details, constructs the request URL,
---                     sets the necessary request headers, and sends the POST request to the Twilio API.
--- ERROR HANDLING    : Logs any processing errors to ERROR_LOG_PKG_SYSTEM_ALL  
---                     with source identification and user context  
--- Author            : ENG.Malek Mohammed Al-edresi  
--- Date              : 2025-12-24  
--- Version           : 1.0  
+--                     This procedure constructs and sends an SMS message using the Twilio API.
+--                     It constructs the request URL, sets the necessary request headers,
+--                     and sends the POST request to the Twilio API.
+-- ERROR HANDLING    : Logs any processing errors with basic error handling
+-- Author            : General Purpose
+-- Date              : 2025-12-26
 ----------------------------------------------------------------------
-    -- Declare variables to hold API configuration details
-    l_get_confgration MANAG_SYS_SEC_L_SETTING_API_SERVICES%ROWTYPE;
+    -- Declare variables
+    l_url               VARCHAR2(500);
+    l_auth_header       VARCHAR2(1000);
+    l_encoded_auth      VARCHAR2(1000);
+    l_result            CLOB;
+    l_error_msg         VARCHAR2(4000);
 
-    -- Declare variables to hold API credentials and configuration details
-    l_account_sid           varchar2(255);
-    l_auth_token            varchar2(255); 
-    l_auth_auth_type        varchar2(10); 
-    l_auth_str              varchar2(500);
-    l_twilio_host           varchar2(30); 
-    l_twilio_api_version    varchar2(20);
-    l_url_api               varchar2(100);
-    l_defult_sender_phone   varchar2(20);
-    l_country_code          varchar2(20);
-    l_full_phone_number     varchar2(20);
-
-
-    -- Declare variable to hold the constructed URL
-    l_method_url            varchar2(300);
-
-    -- Declare variable to hold the result of the API call
-    l_result                clob;
-
-    -- Declare debug template for logging
-    l_debug_template        varchar2(4000) := 'twilio.send_sms_msg %0 %1 %2 %3 %4 %5 %6 %7';
-
-    -- Declare error handling variables
-    l_error_info     file_processing_error_type := file_processing_error_type(NULL, NULL, 'PROCESSING', NVL(v('APP_USER'), 'SYSTEM')); 
-
-begin
-    -- Initialize all variables to ensure clean state
-    l_account_sid := null;
-    l_auth_token := null;
-    l_auth_auth_type := null;
-    l_auth_str := null;
-    l_twilio_host := null;
-    l_twilio_api_version := null;
-    l_url_api := null;
-    l_defult_sender_phone := null;
-    l_country_code := null;
-    l_full_phone_number := null;
-    l_method_url := null;
-    l_result :=  EMPTY_CLOB();
-
+BEGIN
+    -- Validate input parameters
+    IF p_to_phone_no IS NULL OR p_message IS NULL OR p_account_sid IS NULL OR p_auth_token IS NULL OR p_from_phone IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20001, 'All parameters are required: phone number, message, account SID, auth token, and from phone number');
+    END IF;
 
     -- Clear any existing cookies and headers to ensure clean state
-    apex_web_service.clear_request_cookies;
-    apex_web_service.clear_request_headers;
+    APEX_WEB_SERVICE.CLEAR_REQUEST_COOKIES;
+    APEX_WEB_SERVICE.CLEAR_REQUEST_HEADERS;
 
-    -- Enable debug logging and log the start of the procedure
-    apex_debug.enable();
+    -- Construct the API URL
+    l_url := 'https://api.twilio.com/2010-04-01/Accounts/' || p_account_sid || '/Messages.json';
 
-    -- Log the input parameters
-    apex_debug.message(l_debug_template, 'START', 'p_to_phone_no', p_to_phone_no, 'l_defult_sender_phone', l_defult_sender_phone, 'p_msg', p_msg);
+    -- Create the Authorization header (Basic Auth with Account SID and Auth Token)
+    l_encoded_auth := UTL_RAW.CAST_TO_VARCHAR2(UTL_ENCODE.BASE64_ENCODE(UTL_RAW.CAST_TO_RAW(p_account_sid || ':' || p_auth_token)));
+    l_auth_header := 'Basic ' || l_encoded_auth;
 
-    -- Retrieve API configuration
-    l_get_confgration:= GET_API_CONFIG ( p_service_name => 'TWILIO_SMS_SERVICE');
+    -- Set request headers
+    APEX_WEB_SERVICE.G_REQUEST_HEADERS.DELETE();
+    APEX_WEB_SERVICE.G_REQUEST_HEADERS(1).NAME := 'Authorization';
+    APEX_WEB_SERVICE.G_REQUEST_HEADERS(1).VALUE := l_auth_header;
+    APEX_WEB_SERVICE.G_REQUEST_HEADERS(2).NAME := 'Content-Type';
+    APEX_WEB_SERVICE.G_REQUEST_HEADERS(2).VALUE := 'application/x-www-form-urlencoded';
 
-
-    -- Handle any exceptions that may occur during configuration retrieval
+    -- Make the POST request to Twilio API
     BEGIN
-        -- Extract and trim configuration values
-        l_account_sid         := TRIM(l_get_confgration.ACCOUNT_SID);
-        l_auth_token          := TRIM(l_get_confgration.API_KEY); -- Your actual Auth Token
-        l_auth_auth_type      := TRIM(l_get_confgration.AUTH_TYPE);
-        l_auth_str            := l_auth_auth_type || ' ' || l_auth_token;
-        l_twilio_host         := TRIM(l_get_confgration.API_HOST); -- Removed extra spaces
-        l_twilio_api_version  := TRIM(l_get_confgration.SERVICE_VERSION);
-        l_url_api             := TRIM(l_get_confgration.API_URL);
-        l_defult_sender_phone := TRIM(l_get_confgration.DEFAULT_SENDER_PHONE);
-        l_country_code        := TRIM(l_get_confgration.CODE_COUNTRY_CALL);
-
-        -- Construct the full phone number with country code
-        l_full_phone_number   := l_country_code || p_to_phone_no;
-
-
-        -- Construct the full URL for the Twilio API request
-        l_method_url          := l_twilio_host || '/' || l_twilio_api_version ||'/Accounts/'|| l_account_sid || l_url_api;
-
-        apex_debug.message(l_debug_template, 'l_method_url', l_method_url);
-
-     EXCEPTION
-        WHEN OTHERS THEN
-            l_error_info.error_message := 'Error for get data form table MANAG_SYS_SEC_L_SETTING_API_SERVICES' || SQLERRM; 
-            l_error_info.error_source := 'GET_FILE_AS_BASE64 - Main Process';  
-            l_error_info.processing_status := 'ERROR'; 
-            ERROR_LOG_PKG_SYSTEM_ALL.INSERT_FUNCTIONS_SEC_LOG (  
-                l_error_info.error_message,  
-                l_error_info.error_source,  
-                l_error_info.user_name  
-            );  
-    END;
-
-    -- Make the POST request to the Twilio API
-    BEGIN
-       -- Clear any existing headers
-        apex_web_service.g_request_headers.delete();
-
-        -- Set request headers for application/x-www-form-urlencoded and basic auth
-        apex_web_service.g_request_headers(1).name  := 'Content-Type';
-        apex_web_service.g_request_headers(1).value := 'application/x-www-form-urlencoded';
-        apex_web_service.g_request_headers(2).name  := 'Authorization';
-        apex_web_service.g_request_headers(2).value := l_auth_str;
-
-        -- Log the constructed URL and parameters
-        apex_debug.message(l_debug_template, 'l_method_url', l_method_url);
-        apex_debug.message(l_debug_template, 'p_msg', p_msg);
-        apex_debug.message(l_debug_template, 'l_defult_sender_phone', l_defult_sender_phone);
-
-        -- Make the POST request to Twilio API
-        l_result := apex_web_service.make_rest_request (
-            p_url           => l_method_url,
+        l_result := APEX_WEB_SERVICE.MAKE_REST_REQUEST(
+            p_url           => l_url,
             p_http_method   => 'POST',
-            p_parm_name     => apex_string.string_to_table('Body:To:From', ':'),
-            p_parm_value    => apex_string.string_to_table(p_msg || ':' || l_full_phone_number ||':'|| l_defult_sender_phone, ':'),
+            p_parm_name     => APEX_STRING.STRING_TO_TABLE('Body:To:From', ':'),
+            p_parm_value    => APEX_STRING.STRING_TO_TABLE(p_message || ':' || p_to_phone_no || ':' || p_from_phone, ':'),
             p_transfer_timeout => 30
         );
+
+        -- Check if the request was successful
+        IF l_result IS NOT NULL AND INSTR(l_result, '"status":') > 0 THEN
+            DBMS_OUTPUT.PUT_LINE('SMS sent successfully! Response: ' || SUBSTR(l_result, 1, 1000));
+        ELSE
+            RAISE_APPLICATION_ERROR(-20002, 'Failed to send SMS. Response: ' || NVL(l_result, 'No response'));
+        END IF;
+
     EXCEPTION
         WHEN OTHERS THEN
-            l_error_info.error_message := 'Error during Twilio API request' || SQLERRM; 
-            l_error_info.error_source := 'send_sms - Twilio API Request';  
-            l_error_info.processing_status := 'ERROR'; 
-            ERROR_LOG_PKG_SYSTEM_ALL.INSERT_FUNCTIONS_SEC_LOG (  
-                l_error_info.error_message,  
-                l_error_info.error_source,  
-                l_error_info.user_name  
-            );
-
-        -- Clear any existing cookies and headers to ensure clean state
-        apex_web_service.clear_request_cookies;
-        apex_web_service.clear_request_headers;
+            l_error_msg := 'Error sending SMS: ' || SQLERRM;
+            DBMS_OUTPUT.PUT_LINE(l_error_msg);
+            RAISE_APPLICATION_ERROR(-20003, l_error_msg);
     END;
 
-    -- Clear any existing cookies and headers to ensure clean state
-    apex_web_service.clear_request_cookies;
-    apex_web_service.clear_request_headers;
+    -- Clear headers after request
+    APEX_WEB_SERVICE.CLEAR_REQUEST_COOKIES;
+    APEX_WEB_SERVICE.CLEAR_REQUEST_HEADERS;
 
-    -- Log the result of the API call
-    apex_debug.message(l_debug_template, 'l_result', l_result);
-    apex_debug.message(l_debug_template, 'END');
-    apex_debug.disable();
-
-exception
-    when others then
-        -- Log any exceptions that occur during the procedure execution
-        l_error_info.error_message := 'Error in send_sms procedure' || SQLERRM; 
-        l_error_info.error_source := 'send_sms - Main Process';  
-        l_error_info.processing_status := 'ERROR'; 
-        ERROR_LOG_PKG_SYSTEM_ALL.INSERT_FUNCTIONS_SEC_LOG (  
-            l_error_info.error_message,  
-            l_error_info.error_source,  
-            l_error_info.user_name  
-        );
-
-        apex_debug.error(l_debug_template, 'Unhandled Exception ', sqlerrm);
-
-        -- Clear any existing cookies and headers to ensure clean state
-        apex_web_service.clear_request_cookies;
-        apex_web_service.clear_request_headers;
-
-        -- Log the error using your centralized error logging mechanism
-        null;
-end send_sms;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Clear headers in case of error
+        APEX_WEB_SERVICE.CLEAR_REQUEST_COOKIES;
+        APEX_WEB_SERVICE.CLEAR_REQUEST_HEADERS;
+        RAISE;
+END send_sms_twilio;
 /
 
 -- Example of how to use the procedure
+DECLARE
+    l_account_sid VARCHAR2(100) := 'your_account_sid_here';      -- Replace with your actual Twilio Account SID
+    l_auth_token  VARCHAR2(100) := 'your_auth_token_here';       -- Replace with your actual Twilio Auth Token
+    l_from_phone  VARCHAR2(20)  := '+1234567890';                -- Replace with your actual Twilio phone number
 BEGIN
     send_sms_twilio(
-        p_to_phone_no => '+1234567890',  -- Replace with the recipient's phone number
-        p_message     => 'Hello from Oracle APEX & Twilio!' -- Replace with your message content
+        p_to_phone_no => '+1987654321',                          -- Replace with the recipient's phone number
+        p_message     => 'Hello from Oracle APEX & Twilio!',    -- Your message content
+        p_account_sid => l_account_sid,
+        p_auth_token  => l_auth_token,
+        p_from_phone  => l_from_phone
     );
+    
+    DBMS_OUTPUT.PUT_LINE('SMS procedure completed successfully');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
 END;
 /

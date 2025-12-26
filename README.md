@@ -12,6 +12,7 @@ It includes example SQL scripts, a stored procedure for sending SMS, configurati
 
 ---
 
+
 ## Features
 
 * Send SMS directly from Oracle Database using Twilio API
@@ -19,6 +20,8 @@ It includes example SQL scripts, a stored procedure for sending SMS, configurati
 * Works with **Oracle APEX** and **Autonomous Database**
 * Simple configuration & customizable message body
 * Example SQL script included
+* No external configuration table dependency
+* Easy to use with direct parameter passing
 
 ---
 
@@ -68,8 +71,11 @@ Example structure:
 
 ```sql
 create or replace procedure send_sms_twilio(
-    p_to_phone_no in varchar2,
-    p_message     in varchar2
+    p_to_phone_no IN VARCHAR2,
+    p_message     IN VARCHAR2,
+    p_account_sid IN VARCHAR2,
+    p_auth_token  IN VARCHAR2,
+    p_from_phone  IN VARCHAR2
 ) is
     ...
 end;
@@ -81,10 +87,17 @@ end;
 ### 3. Test SMS Sending
 
 ```sql
+DECLARE
+    l_account_sid VARCHAR2(100) := 'your_account_sid_here';
+    l_auth_token  VARCHAR2(100) := 'your_auth_token_here';
+    l_from_phone  VARCHAR2(20)  := '+1234567890';
 BEGIN
     send_sms_twilio(
-        p_to_phone_no => '+1234567890',
-        p_message     => 'Hello from Oracle APEX & Twilio!'
+        p_to_phone_no => '+1987654321',
+        p_message     => 'Hello from Oracle APEX & Twilio!',
+        p_account_sid => l_account_sid,
+        p_auth_token  => l_auth_token,
+        p_from_phone  => l_from_phone
     );
 END;
 /
@@ -97,7 +110,14 @@ END;
 You may call the procedure after button click or dynamic action:
 
 ```plsql
-send_sms_twilio(:P0_PHONE, :P0_MESSAGE);
+DECLARE
+    l_account_sid VARCHAR2(100) := 'your_account_sid_here';
+    l_auth_token  VARCHAR2(100) := 'your_auth_token_here';
+    l_from_phone  VARCHAR2(20)  := '+1234567890';
+BEGIN
+    send_sms_twilio(:P0_PHONE, :P0_MESSAGE, l_account_sid, l_auth_token, l_from_phone);
+END;
+/
 ```
 
 ---
@@ -107,6 +127,8 @@ send_sms_twilio(:P0_PHONE, :P0_MESSAGE);
 * Do not publish **AUTH_TOKEN** publicly
 * Use **APEX Credential Store / Vault** for production
 * Ensure network access to `api.twilio.com`
+* Consider storing credentials in database tables or vault for production use
+* Validate phone numbers and message content before sending
 
 ---
 
@@ -115,3 +137,6 @@ send_sms_twilio(:P0_PHONE, :P0_MESSAGE);
 **Malek Mohammed**  
 *Oracle APEX Engineer, PL/SQL Specialist, Database & Cloud Developer*
 
+LinkedIn: [Malek_Al_Edresi](https://linkedin.com/in/Malek_Al_Edresi)  
+GitHub: [malek-al-edresi](https://github.com/malek-al-edresi)  
+Email: malek.m.edresi@gmail.com
