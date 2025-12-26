@@ -1,5 +1,4 @@
 -- script for create proceudre sned sms by twilio api
-
 create or replace procedure send_sms (
     p_to_phone_no     in varchar2,
     p_msg             in clob
