@@ -184,3 +184,11 @@ exception
 end send_sms;
 /
 
+-- Example of how to use the procedure
+BEGIN
+    send_sms_twilio(
+        p_to_phone_no => '+1234567890',  -- Replace with the recipient's phone number
+        p_message     => 'Hello from Oracle APEX & Twilio!' -- Replace with your message content
+    );
+END;
+/
