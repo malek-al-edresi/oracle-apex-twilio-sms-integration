@@ -1,7 +1,6 @@
 # Oracle APEX + Twilio SMS Integration
 
-This project demonstrates how to integrate **Twilio SMS API** with **Oracle APEX / Oracle Database (PL/SQL)** to send SMS messages programmatically.
-It includes example SQL scripts, a stored procedure for sending SMS, configuration steps, and sample usage.
+This project demonstrates how to integrate the **Twilio SMS API** with **Oracle APEX** and **Oracle Database (PL/SQL)** to send SMS messages programmatically. It provides a production-ready PL/SQL stored procedure, example SQL scripts, configuration guidance, and sample usage patterns for seamless SMS integration.
 
 ---
 ![procedure](screenshot/temp.jpg) 
@@ -15,13 +14,13 @@ It includes example SQL scripts, a stored procedure for sending SMS, configurati
 
 ## Features
 
-* Send SMS directly from Oracle Database using Twilio API
-* Ready-to-use `PL/SQL` procedure for message sending
-* Works with **Oracle APEX** and **Autonomous Database**
-* Simple configuration & customizable message body
-* Example SQL script included
-* No external configuration table dependency
-* Easy to use with direct parameter passing
+* Send SMS messages directly from Oracle Database using the Twilio API
+* Production-ready PL/SQL stored procedure for SMS delivery
+* Compatible with **Oracle APEX** and **Oracle Autonomous Database**
+* Simple configuration with customizable message content
+* Complete example SQL scripts included
+* No external configuration table dependencies
+* Straightforward parameter-based interface
 
 ---
 
@@ -51,9 +50,9 @@ oracle-apex-twilio-sms-integration/
 
 ## Setup Instructions
 
-### 1. Get Twilio Credentials
+### 1. Obtain Twilio Credentials
 
-From Twilio Console:
+Retrieve the following credentials from your Twilio Console:
 
 ```
 ACCOUNT_SID
@@ -63,11 +62,11 @@ TWILIO_PHONE_NUMBER
 
 ---
 
-### 2. Create Procedure Inside Oracle
+### 2. Create the PL/SQL Procedure
 
-Import `script.sql` or create manually.
+Import the provided `script.sql` file into your Oracle Database, or create the procedure manually.
 
-Example structure:
+Procedure structure:
 
 ```sql
 create or replace procedure send_sms_twilio(
@@ -107,7 +106,7 @@ END;
 
 ## APEX Integration Example
 
-You may call the procedure after button click or dynamic action:
+You can invoke the procedure from an APEX button click or dynamic action:
 
 ```plsql
 DECLARE
@@ -124,11 +123,11 @@ END;
 
 ## Security Notes
 
-* Do not publish **AUTH_TOKEN** publicly
-* Use **APEX Credential Store / Vault** for production
-* Ensure network access to `api.twilio.com`
-* Consider storing credentials in database tables or vault for production use
-* Validate phone numbers and message content before sending
+* **Never** expose your **AUTH_TOKEN** in public repositories or client-side code
+* Use **Oracle APEX Credential Store** or a secure vault solution for production deployments
+* Ensure your Oracle Database has network access to `api.twilio.com` (configure ACLs as needed)
+* Store credentials securely using encrypted database tables or external vault services
+* Always validate phone numbers and message content before sending to prevent abuse
 
 ---
 
@@ -140,3 +139,9 @@ END;
 LinkedIn: [Malek_Al_Edresi](https://linkedin.com/in/Malek_Al_Edresi)  
 GitHub: [malek-al-edresi](https://github.com/malek-al-edresi)  
 Email: malek.m.edresi@gmail.com
+
+---
+
+## License
+
+This project is licensed under the Apache License 2.0.
